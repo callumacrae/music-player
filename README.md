@@ -9,3 +9,11 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+## Setup
+
+### Spotify
+
+Create app at https://developer.spotify.com/dashboard
+
+Add env vars to .env (see .env.example for example)

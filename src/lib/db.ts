@@ -7,8 +7,11 @@ db.pragma("journal_mode = WAL");
 
 export type Track = {
   id: number;
-  rfidId: string;
+  rfidId: string | null;
   playerId: string;
+  image: string | null;
+  name: string;
+  artistName: string;
 };
 
 export async function getTrackList(): Promise<Track[]> {
@@ -22,8 +25,11 @@ export async function getTrackList(): Promise<Track[]> {
       db.exec(`
         CREATE TABLE tracks(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          rfidId TEXT UNIQUE,
-          playerId TEXT UNIQUE
+          rfidId TEXT,
+          playerId TEXT NOT NULL,
+          image TEXT,
+          name TEXT NOT NULL,
+          artistName NOT NULL
         )
       `);
       return getTrackList();
@@ -33,10 +39,10 @@ export async function getTrackList(): Promise<Track[]> {
   }
 }
 
-export async function createTrack(newTrack: Omit<Track, "id">) {
+export async function addTrack(newTrack: Omit<Track, "id">) {
   const stmt = db.prepare(`
-    INSERT INTO players (rfidId, playerId)
-    VALUES (@rfidId, @playerId)
+    INSERT INTO tracks (rfidId, playerId, image, name, artistName)
+    VALUES (@rfidId, @playerId, @image, @name, @artistName)
   `);
 
   stmt.run(newTrack);
