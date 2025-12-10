@@ -1,0 +1,26 @@
+{
+  "name": "music-player-server",
+  "version": "1.0.0",
+  "description": "Sensor Monitor",
+  "license": "ISC",
+  "author": "Matthew Gaffen",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "build": "npx rimraf ./dist && mkdir ./dist && tsc && cp ./src/proto/*.proto ./dist/proto",
+    "proto-gen-types": "npx rimraf src/proto/generated && npx proto-loader-gen-types --longs=String --enums=String --default --oneofs --grpcLib=@grpc/grpc-js --outDir=src/proto/generated src/proto/*.proto"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "^1.14.2",
+    "@grpc/proto-loader": "^0.8.0",
+    "@serialport/parser-readline": "^13.0.0",
+    "serialport": "^13.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.2",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.7.4",
+    "typescript": "^5.9.3"
+  }
+}
