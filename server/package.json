@@ -7,6 +7,7 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
+    "test": "node ./dist/",
     "build": "npx rimraf ./dist && mkdir ./dist && tsc && cp ./src/proto/*.proto ./dist/proto",
     "proto-gen-types": "npx rimraf src/proto/generated && npx proto-loader-gen-types --longs=String --enums=String --default --oneofs --grpcLib=@grpc/grpc-js --outDir=src/proto/generated src/proto/*.proto"
   },
