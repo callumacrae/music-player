@@ -26,7 +26,6 @@ class RFIDInterface {
   portInterface: SerialPort | undefined;
   device: PortInfo | undefined;
   sendMessage: (msg: RFIDMessage) => void;
-  currentTag: string | null = null;
   // Assumes a Pepper C1 by default
   constructor({
     vendorId,
@@ -74,7 +73,6 @@ class RFIDInterface {
             messageType: "read",
             data: tag,
           });
-          this.currentTag = tag.uid;
         } catch (e) {
           this.sendMessage({ messageType: "error", error: e });
         }
