@@ -1,18 +1,32 @@
 import { SerialPort } from "serialport";
 import { PortInfo } from "@serialport/bindings-interface";
-import { ReadlineParser } from "@serialport/parser-readline";
+import { StringDecoder } from "string_decoder";
+
+export type RFIDTag = {
+  type: string;
+  uid: string;
+  device_name: string;
+  known_tag: boolean;
+};
+
+export type RFIDMessage = {
+  messageType: "connected" | "disconnected" | "read" | "error";
+  error?: unknown;
+  data?: RFIDTag;
+};
 
 export type RFIDInterfaceConstructorArgs = {
   vendorId?: string;
   productId?: string;
   baud?: number;
-  callback?: () => void;
+  callback?: (msg: RFIDMessage) => void;
 };
 
 class RFIDInterface {
   portInterface: SerialPort | undefined;
   device: PortInfo | undefined;
-  lineStream: ReadlineParser | undefined;
+  sendMessage: (msg: RFIDMessage) => void;
+  currentTag: string | null = null;
   // Assumes a Pepper C1 by default
   constructor({
     vendorId,
@@ -23,6 +37,7 @@ class RFIDInterface {
     let vendor = vendorId || "10c4";
     let product = productId || "ea60";
     let baudRate = baud || 115200;
+    this.sendMessage = callback || function () {};
     this.findDevice(vendor, product).then((device) => {
       if (!device) {
         throw new Error("No RFID reader was detected");
@@ -30,9 +45,7 @@ class RFIDInterface {
         this.device = device;
       }
       this.init(baudRate);
-      if (callback) {
-        callback();
-      }
+      this.sendMessage({ messageType: "connected" });
     });
   }
 
@@ -40,11 +53,34 @@ class RFIDInterface {
     this.portInterface = new SerialPort({
       path: this.device!.path,
       baudRate: baud,
-      autoOpen: false,
+      autoOpen: true,
     });
-    this.lineStream = this.portInterface.pipe(
-      new ReadlineParser({ delimiter: "\r\n" }),
-    );
+
+    let decoder = new StringDecoder();
+    let tagData = "";
+
+    this.portInterface.on("data", (chunk) => {
+      tagData += decoder.write(chunk);
+      if (tagData.includes("}")) {
+        const tagMessages = tagData.split("}");
+        let newTagData = "";
+        if (tagMessages.length > 1) {
+          newTagData = tagMessages[1];
+          tagData = tagMessages[0] + "}";
+        }
+        try {
+          const tag = JSON.parse(tagData);
+          this.sendMessage({
+            messageType: "read",
+            data: tag,
+          });
+          this.currentTag = tag.uid;
+        } catch (e) {
+          this.sendMessage({ messageType: "error", error: e });
+        }
+        tagData = newTagData;
+      }
+    });
   }
 
   async findDevice(
