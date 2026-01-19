@@ -1,18 +1,20 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "nodenext",
     "esModuleInterop": true,
-    "target": "es6",
+    "target": "esnext",
     "allowJs": true,
     "strict": true,
-    "moduleResolution": "node",
+    "moduleResolution": "nodenext",
     "sourceMap": true,
+    "types": ["node"],
     "resolveJsonModule": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["*"]
     },
-    "outDir": "dist",
-    "baseUrl": "."
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "baseUrl": "./src"
   },
   "include": ["src/**/*.ts", "./src/**/*.mts"],
   "exclude": ["node_modules"],

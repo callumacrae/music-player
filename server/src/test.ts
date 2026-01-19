@@ -1,4 +1,4 @@
-import RFIDInterface from "./RFIDInterface";
+import RFIDInterface from "@/RFIDInterface.js";
 
 const rfid = new RFIDInterface({
   callback: (msg) => {

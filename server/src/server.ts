@@ -1,37 +1,17 @@
-import * as grpc from "@grpc/grpc-js";
-import * as protoLoader from "@grpc/proto-loader";
-import { ProtoGrpcType } from "./proto/generated/rfidService";
-import { WatchRequest } from "./proto/generated/WatchRequest";
-import { WatchResponse } from "./proto/generated/WatchResponse";
-import RFIDInterface, { RFIDMessage } from "./RFIDInterface";
-import { time } from "console";
-
-const PROTO_PATH = "./dist/proto/rfidService.proto";
+import * as trpcExpress from "@trpc/server/adapters/express";
+import express, { Router } from "express";
+import RFIDInterface, { RFIDMessage } from "@/RFIDInterface.js";
+import { initTRPC, tracked } from "@trpc/server";
 
 async function main() {
-  const packageDefinition = await protoLoader.load(PROTO_PATH, {
-    keepCase: true,
-    defaults: true,
-    oneofs: true,
-  });
-  const protoDescriptor = grpc.loadPackageDefinition(
-    packageDefinition,
-  ) as unknown as ProtoGrpcType;
-
-  const RFIDReaderService = protoDescriptor.RFIDReaderService;
-
-  class gRPC extends grpc.Server {
-    constructor() {
-      super();
-      this.addService(RFIDReaderService.service, {
-        client: this.getClient,
-      });
-    }
-
-    protected getClient(
-      call: grpc.ServerUnaryCall<WatchRequest, WatchResponse>,
-      callback: grpc.sendUnaryData<WatchResponse>,
-    ) {
+  const createContext = ({
+    req,
+    res,
+  }: trpcExpress.CreateExpressContextOptions) => ({});
+  type Context = Awaited<ReturnType<typeof createContext>>;
+  const t = initTRPC.context<Context>().create();
+  const appRouter = t.router({
+    getClient: t.procedure.subscription(async function* (opts) {
       let currentTag: string | null = null;
       let timeout: NodeJS.Timeout | null = null;
       new RFIDInterface({
@@ -43,30 +23,25 @@ async function main() {
             timeout = setTimeout(() => {
               timeout = null;
               currentTag = msg.data?.uid || null;
-              callback(null, { value: "" });
+              tracked(new Date().toJSON(), { value: "" });
             }, 300);
             if (msg.data?.uid === "string" && currentTag !== msg.data?.uid) {
-              const tagRead: WatchResponse = { value: msg.data.uid };
-              callback(null, tagRead);
+              const tagRead = { value: msg.data.uid };
+
+              tracked(new Date().toJSON(), tagRead);
             }
           }
         },
       });
-    }
-  }
-  const server = new gRPC();
+    }),
+  });
+  const app = express();
 
-  server.bindAsync(
-    "0.0.0.0:50051",
-    grpc.ServerCredentials.createInsecure(),
-    (err) => {
-      if (err) {
-        console.error(err);
-      } else {
-        console.log("gRPC service started");
-      }
-    },
+  app.use(
+    "/",
+    trpcExpress.createExpressMiddleware({ router: appRouter, createContext }),
   );
+  app.listen(4000);
 }
 
 main();

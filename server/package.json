@@ -7,8 +7,8 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "build": "npx rimraf ./dist && mkdir ./dist && tsc && cp ./src/proto/*.proto ./dist/proto",
-    "test": "node ./dist/test.js",
+    "build": "npx rimraf ./dist && mkdir ./dist && tsc && tsc-alias -p tsconfig.json && cp ./src/proto/*.proto ./dist/proto",
+    "test": "mocha",
     "proto-gen-types": "npx rimraf src/proto/generated && npx proto-loader-gen-types --longs=String --enums=String --default --oneofs --grpcLib=@grpc/grpc-js --outDir=src/proto/generated src/proto/*.proto",
     "watch": "tsc --watch"
   },
@@ -16,13 +16,22 @@
     "@grpc/grpc-js": "^1.14.2",
     "@grpc/proto-loader": "^0.8.0",
     "@serialport/parser-readline": "^13.0.0",
+    "@trpc/server": "^11.8.1",
+    "express": "^5.2.1",
     "serialport": "^13.0.0"
   },
   "devDependencies": {
+    "@types/chai": "^5.2.3",
+    "@types/express": "^5.0.6",
+    "@types/mocha": "^10.0.10",
     "@types/node": "^24.10.2",
+    "chai": "^6.2.2",
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^10.1.8",
+    "mocha": "^11.7.5",
     "prettier": "^3.7.4",
+    "tsc-alias": "^1.8.16",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }
 }
