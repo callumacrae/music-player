@@ -7,9 +7,11 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "build": "npx rimraf ./dist && mkdir ./dist && tsc && tsc-alias -p tsconfig.json && cp ./src/proto/*.proto ./dist/proto",
+    "start": "node ./dist/server.js",
+    "build": "npx rimraf ./dist && mkdir ./dist && tsc && tsc-alias -p tsconfig.json && npm run trpc-api-export && cp ./trpc-api-export/dist/index.d.mts ../client/src/common/api-types.mts",
+    "format-fix": "prettier --config .prettierrc --write --ignore-unknown -l .",
     "test": "mocha",
-    "proto-gen-types": "npx rimraf src/proto/generated && npx proto-loader-gen-types --longs=String --enums=String --default --oneofs --grpcLib=@grpc/grpc-js --outDir=src/proto/generated src/proto/*.proto",
+    "trpc-api-export": "tsup --config trpc-api-export/tsup.config.ts && npm run format-fix",
     "watch": "tsc --watch"
   },
   "dependencies": {
@@ -31,6 +33,7 @@
     "mocha": "^11.7.5",
     "prettier": "^3.7.4",
     "tsc-alias": "^1.8.16",
+    "tsup": "^8.5.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }

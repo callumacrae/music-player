@@ -10,6 +10,7 @@
     "types": ["node"],
     "resolveJsonModule": true,
     "paths": {
+      ".": ["."],
       "@/*": ["*"]
     },
     "outDir": "./dist",
