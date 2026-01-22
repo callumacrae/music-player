@@ -8,12 +8,28 @@ import {
   loggerLink,
   splitLink,
 } from "@trpc/client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+
+type TTrpcClient = ReturnType<typeof createTRPCClient<AppRouter>>;
 
 const RFIDDebug = () => {
   const [currentTag, setCurrentTag] = useState<string | null>(null);
+  const [connected, setConnected] = useState(false);
+  const trpcClient = useRef<TTrpcClient | null>(null);
+  const rfidSubscription = useRef<ReturnType<
+    TTrpcClient["getClient"]["subscribe"]
+  > | null>(null);
   useEffect(() => {
-    const trpcClient = createTRPCClient<AppRouter>({
+    initializeClient();
+
+    return () => {
+      rfidSubscription.current?.unsubscribe();
+    };
+  }, []);
+
+  const initializeClient = () => {
+    rfidSubscription.current?.unsubscribe();
+    trpcClient.current = createTRPCClient<AppRouter>({
       links: [
         loggerLink(),
         splitLink({
@@ -27,19 +43,42 @@ const RFIDDebug = () => {
         }),
       ],
     });
-
-    const RFIDSubscription = trpcClient.getClient.subscribe(undefined, {
-      onData(data) {
-        setCurrentTag(data.value !== "" ? data.value : null);
+    rfidSubscription.current = trpcClient.current.getClient.subscribe(
+      undefined,
+      {
+        onData(data) {
+          if (data.error) {
+            console.log(data);
+            setConnected(false);
+          } else {
+            setConnected(true);
+            setCurrentTag(data.value !== "" ? data.value : null);
+          }
+        },
+        onStarted() {
+          setConnected(true);
+        },
+        onError() {
+          setConnected(false);
+        },
       },
-    });
+    );
+  };
 
-    return () => {
-      RFIDSubscription.unsubscribe();
-    };
-  }, []);
-
-  return <p>Currently read tag: {currentTag || "No tag detected"}</p>;
+  return (
+    <div>
+      <p>Active connection: {connected ? "Connected" : "Disconnected"}</p>
+      <p>Currently read tag: {currentTag || "No tag detected"}</p>
+      {!connected && (
+        <button
+          style={{ background: "white", color: "black", cursor: "pointer" }}
+          onClick={initializeClient}
+        >
+          Reconnect to sensor
+        </button>
+      )}
+    </div>
+  );
 };
 
 export default RFIDDebug;

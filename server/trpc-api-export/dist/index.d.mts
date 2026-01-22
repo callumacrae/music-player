@@ -17,6 +17,11 @@ declare const appRouter: _trpc_server.TRPCBuiltRouter<
       output: AsyncIterable<RFIDTrpcMessage, void, any>;
       meta: object;
     }>;
+    getCurrentTag: _trpc_server.TRPCQueryProcedure<{
+      input: void;
+      output: RFIDTrpcMessage;
+      meta: object;
+    }>;
   }>
 >;
 type AppRouter = typeof appRouter;

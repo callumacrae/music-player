@@ -78,6 +78,7 @@ class RFIDInterface {
             data: tag,
           });
         } catch (e) {
+          console.log(e);
           this.sendMessage({ messageType: "error", error: e });
         }
         tagData = newTagData;
@@ -88,7 +89,9 @@ class RFIDInterface {
       this.portClosed(e);
     });
     this.portInterface.on("close", (data: Error | null) => {
-      this.portClosed(data);
+      if (data) {
+        this.portClosed(data);
+      }
     });
   }
 
@@ -104,6 +107,13 @@ class RFIDInterface {
         return false;
       }
     });
+  }
+
+  async destroy() {
+    await new Promise((resolve) => {
+      this.portInterface?.close(resolve);
+    });
+    this.portInterface?.destroy();
   }
 }
 

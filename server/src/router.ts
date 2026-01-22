@@ -1,8 +1,7 @@
 import * as trpcExpress from "@trpc/server/adapters/express";
-import { initTRPC, tracked } from "@trpc/server";
+import { initTRPC } from "@trpc/server";
 import RFIDInterface, { RFIDMessage } from "@/RFIDInterface.js";
 import EventEmitter, { on } from "node:events";
-import { error } from "node:console";
 
 export const createContext = ({
   req,
@@ -15,12 +14,19 @@ export type RFIDTrpcMessage = { value: string; error?: string };
 
 const ee = new EventEmitter();
 
+let currentTag: string | null = null;
+let rfidInterface: RFIDInterface | null = null;
+
 export const appRouter = t.router({
   getClient: t.procedure.subscription(async function* (opts) {
     try {
-      let currentTag: string | null = null;
+      if (rfidInterface) {
+        await rfidInterface.destroy();
+        rfidInterface = null;
+        currentTag = null;
+      }
       let timeout: NodeJS.Timeout | null = null;
-      new RFIDInterface({
+      rfidInterface = new RFIDInterface({
         callback: (msg: RFIDMessage) => {
           if (msg.messageType === "read") {
             if (timeout) {
@@ -41,6 +47,7 @@ export const appRouter = t.router({
               ee.emit("rfidtagupdate", tagRead);
             }
           } else if (msg.messageType === "error") {
+            console.log(msg);
             ee.emit("rfidtagupdate", {
               value: "error",
               error: "Reader connection lost",
@@ -57,6 +64,9 @@ export const appRouter = t.router({
       const tagMessage = data as RFIDTrpcMessage;
       yield tagMessage;
     }
+  }),
+  getCurrentTag: t.procedure.query((): RFIDTrpcMessage => {
+    return { value: currentTag || "" };
   }),
 });
 
