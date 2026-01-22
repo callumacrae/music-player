@@ -19,11 +19,13 @@
     "@grpc/proto-loader": "^0.8.0",
     "@serialport/parser-readline": "^13.0.0",
     "@trpc/server": "^11.8.1",
+    "cors": "^2.8.5",
     "express": "^5.2.1",
     "serialport": "^13.0.0"
   },
   "devDependencies": {
     "@types/chai": "^5.2.3",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/mocha": "^10.0.10",
     "@types/node": "^24.10.2",

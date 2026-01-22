@@ -2,6 +2,7 @@ import * as _trpc_server from "@trpc/server";
 
 type RFIDTrpcMessage = {
   value: string;
+  error?: string;
 };
 declare const appRouter: _trpc_server.TRPCBuiltRouter<
   {
@@ -13,7 +14,7 @@ declare const appRouter: _trpc_server.TRPCBuiltRouter<
   _trpc_server.TRPCDecorateCreateRouterOptions<{
     getClient: _trpc_server.TRPCSubscriptionProcedure<{
       input: void;
-      output: AsyncIterable<never, void, any>;
+      output: AsyncIterable<RFIDTrpcMessage, void, any>;
       meta: object;
     }>;
   }>

@@ -48,6 +48,10 @@ class RFIDInterface {
     });
   }
 
+  portClosed(data: Error | null) {
+    this.sendMessage({ messageType: "error", error: data?.message });
+  }
+
   init(baud: number): void {
     this.portInterface = new SerialPort({
       path: this.device!.path,
@@ -78,6 +82,13 @@ class RFIDInterface {
         }
         tagData = newTagData;
       }
+    });
+
+    this.portInterface.on("error", (e) => {
+      this.portClosed(e);
+    });
+    this.portInterface.on("close", (data: Error | null) => {
+      this.portClosed(data);
     });
   }
 
