@@ -1,19 +1,21 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# RFID Music Player
 
-## Getting Started
+This project is designed to run on a [Raspberry Pi Zero](https://www.raspberrypi.com/products/raspberry-pi-zero/), a full bill of materials will be assembled in the near future. In short, you will need:
 
-First, run the development server:
+- Raspi Zero
+- RFID reader (the pepper C1 USB model is what is being tested against - compatibility with other devices will need to be set up as a future feature)
+- Raspberry Pi Zero USB hat (required to allow the pi to receive USB input)
+- RFID tags
 
-```bash
-npm run dev
-```
+## Project structure
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The project comprises of a client web app that resides in the `/client` folder, and a node application that communicates via serial with the reader, which is located in the `/server` folder.
 
-## Setup
+## Running the project in development mode
 
-### Spotify
-
-Create app at https://developer.spotify.com/dashboard
-
-Add env vars to .env (see .env.example for example)
+- set up the target device with the RFID reader connected via USB
+- run `npm install` in both the client and server directories.
+- open two terminal sessions
+- in one, navigate to the `/server` directory and run `npm build` (on first run), followed by `npm start`
+- in the other, navigate to the `/client` directory and run `npm run dev`
+- navigate to `http://localhost:3000/rfid-debug` to see the status of the reader integration
