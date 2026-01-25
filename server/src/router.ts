@@ -26,35 +26,43 @@ export const appRouter = t.router({
         currentTag = null;
       }
       let timeout: NodeJS.Timeout | null = null;
-      rfidInterface = new RFIDInterface({
-        callback: (msg: RFIDMessage) => {
-          if (msg.messageType === "read") {
-            if (timeout) {
-              clearTimeout(timeout);
-            }
-            timeout = setTimeout(() => {
-              timeout = null;
-              currentTag = null;
-              ee.emit("rfidtagupdate", { value: "" });
-            }, 300);
-            if (
-              typeof msg.data?.uid === "string" &&
-              currentTag !== msg.data?.uid
-            ) {
-              currentTag = msg.data.uid;
-              const tagRead: RFIDTrpcMessage = { value: msg.data.uid };
+      try {
+        rfidInterface = new RFIDInterface({
+          callback: (msg: RFIDMessage) => {
+            if (msg.messageType === "read") {
+              if (timeout) {
+                clearTimeout(timeout);
+              }
+              timeout = setTimeout(() => {
+                timeout = null;
+                currentTag = null;
+                ee.emit("rfidtagupdate", { value: "" });
+              }, 300);
+              if (
+                typeof msg.data?.uid === "string" &&
+                currentTag !== msg.data?.uid
+              ) {
+                currentTag = msg.data.uid;
+                const tagRead: RFIDTrpcMessage = { value: msg.data.uid };
 
-              ee.emit("rfidtagupdate", tagRead);
+                ee.emit("rfidtagupdate", tagRead);
+              }
+            } else if (msg.messageType === "error") {
+              console.log(msg);
+              ee.emit("rfidtagupdate", {
+                value: "error",
+                error: "Reader connection lost",
+              });
             }
-          } else if (msg.messageType === "error") {
-            console.log(msg);
-            ee.emit("rfidtagupdate", {
-              value: "error",
-              error: "Reader connection lost",
-            });
-          }
-        },
-      });
+          },
+        });
+      } catch (e) {
+        console.log(e);
+        ee.emit("rfidtagupdate", {
+          value: "error",
+          error: "Reader connection lost",
+        });
+      }
     } catch (e) {
       ee.emit("readerror");
     }

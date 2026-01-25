@@ -1,9 +1,19 @@
 "use client";
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import { RFIDContext } from "./Providers";
+import { kodiClearAndStop, kodiPlayItem } from "@/lib/players/kodi";
 
 const RFIDDebug = () => {
   const { currentTag, connected, initializeClient } = useContext(RFIDContext);
+
+  useEffect(() => {
+    if (currentTag !== null && currentTag !== "") {
+      kodiPlayItem({ albumid: 717 });
+      // kodiPlayItem({ albumid: 472 });
+    } else {
+      kodiClearAndStop();
+    }
+  }, [currentTag]);
 
   return (
     <div>
