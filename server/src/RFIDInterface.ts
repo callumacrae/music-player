@@ -26,6 +26,10 @@ class RFIDInterface {
   portInterface: SerialPort | undefined;
   device: PortInfo | undefined;
   sendMessage: (msg: RFIDMessage) => void;
+  vendor = "10c4";
+  product = "ea60";
+  baudRate = 115200;
+
   // Assumes a Pepper C1 by default
   constructor({
     vendorId,
@@ -33,29 +37,31 @@ class RFIDInterface {
     baud,
     callback,
   }: RFIDInterfaceConstructorArgs) {
-    let vendor = vendorId || "10c4";
-    let product = productId || "ea60";
-    let baudRate = baud || 115200;
+    if (vendorId) this.vendor = vendorId;
+    if (productId) this.product = productId;
+    if (baud) this.baudRate = baud;
     this.sendMessage = callback || function () {};
-    this.findDevice(vendor, product).then((device) => {
-      if (!device) {
-        throw new Error("No RFID reader was detected");
-      } else {
-        this.device = device;
-      }
-      this.init(baudRate);
-      this.sendMessage({ messageType: "connected" });
-    });
   }
 
   portClosed(data: Error | null) {
     this.sendMessage({ messageType: "error", error: data?.message });
   }
 
-  init(baud: number): void {
+  async init(): Promise<void> {
+    console.log("Initialising RFID interface");
+    await this.findDevice(this.vendor, this.product).then((device) => {
+      if (!device) {
+        throw new Error("No RFID reader was detected");
+      } else {
+        this.device = device;
+      }
+      this.sendMessage({ messageType: "connected" });
+    });
+    console.log("device found:", this.device);
+
     this.portInterface = new SerialPort({
       path: this.device!.path,
-      baudRate: baud,
+      baudRate: this.baudRate,
       autoOpen: true,
     });
 
@@ -100,6 +106,7 @@ class RFIDInterface {
     productId: string,
   ): Promise<PortInfo | undefined> {
     const ports: PortInfo[] = await SerialPort.list();
+    console.log("Finding device");
     return ports.find((port) => {
       if (port.vendorId === vendorId && port.productId === productId) {
         return true;

@@ -22,6 +22,11 @@ declare const appRouter: _trpc_server.TRPCBuiltRouter<
       output: RFIDTrpcMessage;
       meta: object;
     }>;
+    reinitialiseInterface: _trpc_server.TRPCQueryProcedure<{
+      input: void;
+      output: void;
+      meta: object;
+    }>;
   }>
 >;
 type AppRouter = typeof appRouter;
