@@ -15,6 +15,7 @@
     "@trpc/client": "^11.8.1",
     "@types/better-sqlite3": "^7.6.13",
     "better-sqlite3": "^12.4.1",
+    "json-rpc-2.0": "^1.7.1",
     "next": "16.0.1",
     "react": "19.2.0",
     "react-dom": "19.2.0"
