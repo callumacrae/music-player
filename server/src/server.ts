@@ -1,7 +1,10 @@
 import * as trpcExpress from "@trpc/server/adapters/express";
 import express from "express";
-import { appRouter, createContext } from "@/router";
+import { getAppRouter, createContext } from "@/router";
 import cors from "cors";
+import RFIDInterface from "./RFIDInterface";
+
+const rfidInterface = new RFIDInterface({});
 
 async function main() {
   const app = express();
@@ -11,7 +14,10 @@ async function main() {
   app.use(cors(corsOptions));
   app.use(
     "/",
-    trpcExpress.createExpressMiddleware({ router: appRouter, createContext }),
+    trpcExpress.createExpressMiddleware({
+      router: getAppRouter(rfidInterface),
+      createContext,
+    }),
   );
   app.listen(4000);
 }

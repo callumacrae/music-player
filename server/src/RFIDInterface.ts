@@ -1,6 +1,8 @@
 import { SerialPort } from "serialport";
+// @ts-ignore
 import { PortInfo } from "@serialport/bindings-interface";
 import { StringDecoder } from "string_decoder";
+import { kodiClearAndStop, kodiPlayItem } from "./lib/kodi";
 
 export type RFIDTag = {
   type: string;
@@ -25,10 +27,13 @@ export type RFIDInterfaceConstructorArgs = {
 class RFIDInterface {
   portInterface: SerialPort | undefined;
   device: PortInfo | undefined;
-  sendMessage: (msg: RFIDMessage) => void;
+  sendMessage = (msg: RFIDMessage) => {};
   vendor = "10c4";
   product = "ea60";
   baudRate = 115200;
+  connected = false;
+  timeout: NodeJS.Timeout | null = null;
+  currentTag: string | null = null;
 
   // Assumes a Pepper C1 by default
   constructor({
@@ -40,25 +45,85 @@ class RFIDInterface {
     if (vendorId) this.vendor = vendorId;
     if (productId) this.product = productId;
     if (baud) this.baudRate = baud;
-    this.sendMessage = callback || function () {};
+    this.setCallback(callback || function () {});
+    this.init();
   }
 
   portClosed(data: Error | null) {
     this.sendMessage({ messageType: "error", error: data?.message });
   }
 
-  async init(): Promise<void> {
-    console.log("Initialising RFID interface");
-    await this.findDevice(this.vendor, this.product).then((device) => {
-      if (!device) {
-        throw new Error("No RFID reader was detected");
-      } else {
-        this.device = device;
-      }
-      this.sendMessage({ messageType: "connected" });
-    });
-    console.log("device found:", this.device);
+  async controlMedia(msg: RFIDMessage) {
+    await kodiClearAndStop();
+    if (msg.data?.uid) {
+      await kodiPlayItem({ albumid: 85 });
+    }
+  }
 
+  setCallback(callback: (msg: RFIDMessage) => void) {
+    this.sendMessage = (msg: RFIDMessage) => {
+      if (msg.messageType === "read") {
+        this.controlMedia(msg);
+      }
+      callback(msg);
+    };
+    if (this.connected) {
+      this.sendMessage({ messageType: "connected" });
+    } else {
+      this.sendMessage({ messageType: "disconnected" });
+    }
+  }
+
+  messageCallback = (msg: RFIDMessage) => {
+    if (msg.messageType === "read") {
+      //      console.log("rfid read message:", msg);
+      if (this.timeout) {
+        clearTimeout(this.timeout);
+      }
+      this.timeout = setTimeout(() => {
+        this.timeout = null;
+        this.currentTag = null;
+        this.sendMessage({ messageType: "read" });
+      }, 300);
+      if (
+        typeof msg.data?.uid === "string" &&
+        this.currentTag !== msg.data?.uid
+      ) {
+        this.currentTag = msg.data.uid;
+
+        this.sendMessage({ messageType: "read", data: msg.data });
+      }
+    } else if (msg.messageType === "error") {
+      this.sendMessage({
+        messageType: "error",
+        error: "Reader connection lost",
+      });
+    }
+  };
+
+  async init(): Promise<void> {
+    setInterval(async () => {
+      if (!this.connected) {
+        try {
+          console.log("Initialising RFID interface");
+          await this.findDevice(this.vendor, this.product).then((device) => {
+            if (!device) {
+              throw new Error("No RFID reader was detected");
+            } else {
+              this.device = device;
+            }
+            this.sendMessage({ messageType: "connected" });
+          });
+          console.log("device found:", this.device);
+          this.portOpen();
+        } catch (e) {
+          console.log("port not found, retrying in 1s");
+        }
+      }
+    }, 1000);
+  }
+
+  async portOpen() {
     this.portInterface = new SerialPort({
       path: this.device!.path,
       baudRate: this.baudRate,
@@ -79,22 +144,25 @@ class RFIDInterface {
         }
         try {
           const tag = JSON.parse(tagData);
-          this.sendMessage({
+          this.messageCallback({
             messageType: "read",
             data: tag,
           });
         } catch (e) {
-          console.log(e);
-          this.sendMessage({ messageType: "error", error: e });
+          console.error(e);
+          this.messageCallback({ messageType: "error", error: e });
         }
         tagData = newTagData;
       }
     });
+    this.connected = true;
 
     this.portInterface.on("error", (e) => {
+      this.connected = false;
       this.portClosed(e);
     });
     this.portInterface.on("close", (data: Error | null) => {
+      this.connected = false;
       if (data) {
         this.portClosed(data);
       }

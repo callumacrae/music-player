@@ -7,7 +7,7 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "start": "node ./dist/server.js",
+    "start": "node --env-file=.env ./dist/server.js",
     "build": "npx rimraf ./dist && mkdir ./dist && tsc && tsc-alias -p tsconfig.json && npm run trpc-api-export && cp ./trpc-api-export/dist/index.d.mts ../client/src/common/api-types.mts",
     "format-fix": "prettier --config .prettierrc --write --ignore-unknown -l .",
     "test": "mocha",
@@ -21,6 +21,7 @@
     "@trpc/server": "^11.8.1",
     "cors": "^2.8.5",
     "express": "^5.2.1",
+    "json-rpc-2.0": "^1.7.1",
     "serialport": "^13.0.0"
   },
   "devDependencies": {

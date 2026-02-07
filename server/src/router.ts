@@ -43,51 +43,41 @@ const messageCallback = (msg: RFIDMessage) => {
   }
 };
 
-const getRfidInterfaceInstance = async () => {
+const configureRfidMessages = async () => {
   rfidInterface = new RFIDInterface({
     callback: messageCallback,
   });
-  rfidInterface
-    .init()
-    .then(() => {
-      ee.emit("rfidtagupdate", { value: "" });
-    })
-    .catch((e) => {
-      console.log("initialisation failed", e.message);
-      ee.emit("rfidtagupdate", { value: "error", error: e.message });
-    });
 };
 
-export const appRouter = t.router({
-  getClient: t.procedure.subscription(async function* (opts) {
-    try {
-      if (rfidInterface) {
-        await rfidInterface.destroy();
-        rfidInterface = null;
-        currentTag = null;
+export const getAppRouter = (rfidReader: RFIDInterface) => {
+  return t.router({
+    getClient: t.procedure.subscription(async function* (opts) {
+      try {
+        if (rfidInterface) {
+          await rfidInterface.destroy();
+          rfidInterface = null;
+          currentTag = null;
+        }
+        configureRfidMessages();
+      } catch (e) {
+        console.log("error instantiating interface");
+        ee.emit("rfidtagupdate", { value: "error" });
       }
-      getRfidInterfaceInstance();
-    } catch (e) {
-      console.log("error instantiating interface");
-      ee.emit("rfidtagupdate", { value: "error" });
-    }
-    try {
-      for await (const [data] of on(ee, "rfidtagupdate", {
-        signal: opts.signal,
-      })) {
-        const tagMessage = data as RFIDTrpcMessage;
-        yield tagMessage;
+      try {
+        for await (const [data] of on(ee, "rfidtagupdate", {
+          signal: opts.signal,
+        })) {
+          const tagMessage = data as RFIDTrpcMessage;
+          yield tagMessage;
+        }
+      } finally {
+        rfidInterface?.destroy();
       }
-    } finally {
-      rfidInterface?.destroy();
-    }
-  }),
-  getCurrentTag: t.procedure.query((): RFIDTrpcMessage => {
-    return { value: currentTag || "" };
-  }),
-  reinitialiseInterface: t.procedure.query(() => {
-    getRfidInterfaceInstance();
-  }),
-});
+    }),
+    getCurrentTag: t.procedure.query((): RFIDTrpcMessage => {
+      return { value: currentTag || "" };
+    }),
+  });
+};
 
-export type AppRouter = typeof appRouter;
+export type AppRouter = ReturnType<typeof getAppRouter>;
