@@ -1,14 +1,14 @@
 import { JSONRPCClient } from "json-rpc-2.0";
 
-type PlayArtistParams = {
+export type PlayArtistParams = {
   artist: number;
 };
 
-type PlayAlbumParams = {
+export type PlayAlbumParams = {
   albumid: number;
 };
 
-type PlayItemParams = {
+export type PlayItemParams = {
   id: number;
 };
 
@@ -35,7 +35,6 @@ export async function getKodiClient(host: string) {
         return { error: e };
       });
   });
-  console.log("client created");
 
   return client;
 }
@@ -43,6 +42,7 @@ export async function getKodiClient(host: string) {
 export async function kodiPlayItem(
   item: PlayAlbumParams | PlayItemParams | PlayArtistParams,
 ) {
+  console.log(item);
   const client = await getKodiClient(process.env.KODI_HOST);
   await client.request("Player.Stop", { playerid: 0 });
   await client.request("Playlist.Clear", [0]);

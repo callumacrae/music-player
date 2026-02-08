@@ -30,7 +30,7 @@ export async function getTrackList(): Promise<Track[]> {
           playerId TEXT NOT NULL,
           image TEXT,
           name TEXT NOT NULL,
-          artistName NOT NULL
+          artistName NOT NULL,
           type TEXT
         )
       `);
@@ -42,11 +42,21 @@ export async function getTrackList(): Promise<Track[]> {
 }
 
 export async function addTrack(newTrack: Omit<Track, "id">) {
+  const delStmt = db.prepare(`DELETE FROM tracks WHERE rfidID = ?`);
+  delStmt.run(newTrack.rfidId);
+  console.log(newTrack);
   const stmt = db.prepare(`
-    INSERT INTO tracks (rfidId, playerId, image, name, artistName)
-    VALUES (@rfidId, @playerId, @image, @name, @artistName)
+    INSERT INTO tracks (rfidId, playerId, image, name, artistName, type)
+    VALUES (@rfidId, @playerId, @image, @name, @artistName, @type)
   `);
 
   stmt.run(newTrack);
   return true;
+}
+
+export async function getTrackByRFIDId(rfidId: string): Promise<Track | null> {
+  const row = db
+    .prepare<string[], Track>("SELECT * FROM tracks WHERE rfidId = ?")
+    .get(rfidId);
+  return row ? row : null;
 }

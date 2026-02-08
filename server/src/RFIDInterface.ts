@@ -2,7 +2,14 @@ import { SerialPort } from "serialport";
 // @ts-ignore
 import { PortInfo } from "@serialport/bindings-interface";
 import { StringDecoder } from "string_decoder";
-import { kodiClearAndStop, kodiPlayItem } from "./lib/kodi";
+import {
+  kodiClearAndStop,
+  kodiPlayItem,
+  PlayAlbumParams,
+  PlayArtistParams,
+  PlayItemParams,
+} from "./lib/kodi";
+import { getTrackByRFIDId } from "./lib/db";
 
 export type RFIDTag = {
   type: string;
@@ -56,7 +63,17 @@ class RFIDInterface {
   async controlMedia(msg: RFIDMessage) {
     await kodiClearAndStop();
     if (msg.data?.uid) {
-      await kodiPlayItem({ albumid: 85 });
+      const args: Record<string, number> = {};
+      const track = await getTrackByRFIDId(msg.data.uid);
+      if (!track) {
+        return;
+      } else if (track.type === "album") {
+        args.albumid = parseInt(track.playerId, 10);
+      }
+
+      await kodiPlayItem(
+        args as PlayArtistParams | PlayAlbumParams | PlayItemParams,
+      );
     }
   }
 

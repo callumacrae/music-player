@@ -16,25 +16,15 @@ const ee = new EventEmitter();
 
 let currentTag: string | null = null;
 let rfidInterface: RFIDInterface | null = null;
-let timeout: NodeJS.Timeout | null = null;
 
 const messageCallback = (msg: RFIDMessage) => {
+  console.log(msg);
   if (msg.messageType === "read") {
     console.log("rfid read message:", msg);
-    if (timeout) {
-      clearTimeout(timeout);
-    }
-    timeout = setTimeout(() => {
-      timeout = null;
-      currentTag = null;
-      ee.emit("rfidtagupdate", { value: "" });
-    }, 300);
-    if (typeof msg.data?.uid === "string" && currentTag !== msg.data?.uid) {
-      currentTag = msg.data.uid;
-      const tagRead: RFIDTrpcMessage = { value: msg.data.uid };
+    currentTag = msg?.data?.uid || "";
+    const tagRead: RFIDTrpcMessage = { value: currentTag };
 
-      ee.emit("rfidtagupdate", tagRead);
-    }
+    ee.emit("rfidtagupdate", tagRead);
   } else if (msg.messageType === "error") {
     ee.emit("rfidtagupdate", {
       value: "error",
@@ -43,13 +33,9 @@ const messageCallback = (msg: RFIDMessage) => {
   }
 };
 
-const configureRfidMessages = async () => {
-  rfidInterface = new RFIDInterface({
-    callback: messageCallback,
-  });
-};
-
 export const getAppRouter = (rfidReader: RFIDInterface) => {
+  rfidInterface = rfidReader;
+  rfidInterface.setCallback(messageCallback);
   return t.router({
     getClient: t.procedure.subscription(async function* (opts) {
       try {
@@ -58,7 +44,6 @@ export const getAppRouter = (rfidReader: RFIDInterface) => {
           rfidInterface = null;
           currentTag = null;
         }
-        configureRfidMessages();
       } catch (e) {
         console.log("error instantiating interface");
         ee.emit("rfidtagupdate", { value: "error" });

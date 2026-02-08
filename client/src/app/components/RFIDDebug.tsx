@@ -1,31 +1,43 @@
 "use client";
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { RFIDContext } from "./Providers";
-import {
-  kodiClearAndStop,
-  kodiPlayItem,
-  searchKodiLibrary,
-} from "@/lib/players/kodi";
-import { Track } from "@/lib/db";
+import { searchKodiLibrary } from "@/lib/players/kodi";
+import { addTrack, getTrackByRFIDId, getTrackList, Track } from "@/lib/db";
 
 const RFIDDebug = () => {
-  const { currentTag, connected, startRFID, initializeClient, reading } =
+  const { currentTag, connected, initializeClient, reading } =
     useContext(RFIDContext);
+  const [tagTrack, setTagTrack] = useState<Track | null>(null);
+
+  const saveTag = useCallback(
+    (track: Track) => {
+      track.rfidId = currentTag;
+      addTrack(track);
+    },
+    [currentTag],
+  );
 
   useEffect(() => {
-    if (currentTag !== null && currentTag !== "") {
-      kodiPlayItem({ albumid: 717 });
-      // kodiPlayItem({ albumid: 472 });
+    if (currentTag) {
+      getTrackByRFIDId(currentTag).then((track) => {
+        setTagTrack(track);
+      });
     } else {
-      kodiClearAndStop();
+      setTagTrack(null);
     }
-  }, [currentTag]);
+  }, [currentTag, setTagTrack]);
 
   return (
     <div>
       <p>Active connection: {connected ? "Connected" : "Disconnected"}</p>
       <p>Active reader: {reading ? "Connected" : "Disconnected"}</p>
       <p>Currently read tag: {currentTag || "No tag detected"}</p>
+      {tagTrack && (
+        <>
+          <p>Current tag track:</p>
+          <ItemRow item={tagTrack} />
+        </>
+      )}
       {!connected && (
         <button
           style={{ background: "white", color: "black", cursor: "pointer" }}
@@ -34,15 +46,13 @@ const RFIDDebug = () => {
           Reconnect to server
         </button>
       )}
-      {!reading && (
-        <button
-          style={{ background: "white", color: "black", cursor: "pointer" }}
-          onClick={startRFID}
-        >
-          Start reader
-        </button>
-      )}
-      <RFIDAssignmentForm apiQueryFunction={searchKodiLibrary} />
+      <h1 style={{ fontWeight: "bold", fontSize: "2rem" }}>
+        Change current tag assignment
+      </h1>
+      <RFIDAssignmentForm
+        apiQueryFunction={searchKodiLibrary}
+        saveTrack={saveTag}
+      />
     </div>
   );
 };
@@ -88,8 +98,10 @@ const ItemRow = ({
 
 const RFIDAssignmentForm = ({
   apiQueryFunction,
+  saveTrack,
 }: {
   apiQueryFunction: (search: string) => Promise<Track[]>;
+  saveTrack: (track: Track) => void;
 }) => {
   const [searchVal, setSearchVal] = useState("");
   const [debouncedVal, setDebouncedVal] = useState("");
@@ -107,6 +119,10 @@ const RFIDAssignmentForm = ({
   }, [searchVal]);
 
   useEffect(() => {
+    getTrackList().then(console.log);
+  }, []);
+
+  useEffect(() => {
     apiQueryFunction(debouncedVal).then((tracks: Track[]) => {
       setSearchItems(tracks);
     });
@@ -114,7 +130,18 @@ const RFIDAssignmentForm = ({
 
   return (
     <div style={{ background: "white", color: "black" }}>
-      {selectedItem && <ItemRow item={selectedItem} />}
+      {selectedItem && (
+        <div>
+          <ItemRow item={selectedItem} />
+          <button
+            onClick={() => {
+              saveTrack(selectedItem);
+            }}
+          >
+            Save track to tag
+          </button>
+        </div>
+      )}
       <input
         style={{ width: "100%", border: "1px solid #333", padding: "5px" }}
         placeholder="Search Value"

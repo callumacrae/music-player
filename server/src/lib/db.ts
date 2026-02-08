@@ -1,6 +1,6 @@
 import Database from "better-sqlite3";
 
-const db = new Database("../../../client/tracks.db");
+const db = new Database("../client/tracks.db");
 db.pragma("journal_mode = WAL");
 
 export type Track = {

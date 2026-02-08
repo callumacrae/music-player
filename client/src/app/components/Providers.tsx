@@ -20,7 +20,6 @@ export type TRFIDContext = {
   reading: boolean;
   initializeClient: () => void;
   getCurrentTag: () => Promise<RFIDTrpcMessage>;
-  startRFID: () => void;
 };
 
 export const RFIDContext = createContext<TRFIDContext>({
@@ -31,7 +30,6 @@ export const RFIDContext = createContext<TRFIDContext>({
   getCurrentTag: async (): Promise<RFIDTrpcMessage> => {
     return { value: "" };
   },
-  startRFID: () => {},
 });
 
 const Providers = ({ children }: { children: React.ReactNode }) => {
@@ -64,6 +62,7 @@ const Providers = ({ children }: { children: React.ReactNode }) => {
             console.log(data);
             setReading(false);
           } else {
+            console.log(data);
             setReading(true);
             setCurrentTag(data.value !== "" ? data.value : null);
           }
@@ -99,12 +98,6 @@ const Providers = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const startRFID = () => {
-    if (trpcClient.current?.reinitialiseInterface) {
-      trpcClient.current.reinitialiseInterface.query();
-    }
-  };
-
   return (
     <RFIDContext.Provider
       value={{
@@ -112,7 +105,6 @@ const Providers = ({ children }: { children: React.ReactNode }) => {
         connected,
         initializeClient,
         getCurrentTag,
-        startRFID,
         reading,
       }}
     >
