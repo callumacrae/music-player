@@ -12,6 +12,7 @@ export type Track = {
   image: string | null;
   name: string;
   artistName: string;
+  type?: "album" | "artist" | "song";
 };
 
 export async function getTrackList(): Promise<Track[]> {
@@ -30,6 +31,7 @@ export async function getTrackList(): Promise<Track[]> {
           image TEXT,
           name TEXT NOT NULL,
           artistName NOT NULL
+          type TEXT
         )
       `);
       return getTrackList();

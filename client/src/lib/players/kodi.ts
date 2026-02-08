@@ -1,6 +1,7 @@
 // import { SpotifyApi } from "@spotify/web-api-ts-sdk";
 
 import { JSONRPCClient } from "json-rpc-2.0";
+import { Track } from "../db";
 
 // const sdk = SpotifyApi.withUserAuthorization(
 //   process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID!,
@@ -111,7 +112,7 @@ export async function searchKodiArtists(searchval: string) {
 
 export async function searchKodiAlbums(searchval: string) {
   const response = await callLocalKodiApi("AudioLibrary.GetAlbums", {
-    properties: ["thumbnail", "genre", "style"],
+    properties: ["thumbnail", "genre", "style", "artist"],
     limits: { start: 0, end: 20 },
     sort: { method: "title", order: "ascending", ignorearticle: true },
     filter: { operator: "contains", field: "album", value: searchval },
@@ -122,13 +123,46 @@ export async function searchKodiAlbums(searchval: string) {
 
 export async function searchKodiSongs(searchval: string) {
   const response = await callLocalKodiApi("AudioLibrary.GetSongs", {
-    properties: ["title", "thumbnail", "track"],
+    properties: ["title", "thumbnail", "track", "artist"],
     limits: { start: 0, end: 21 },
     sort: { method: "track", order: "ascending", ignorearticle: true },
     filter: { operator: "contains", field: "title", value: searchval },
   });
 
   return response;
+}
+
+function toTracks(
+  kodiRecords: Record<string, any[]>,
+  type: "album" | "artist" | "song",
+): Track[] {
+  if (!kodiRecords[`${type}s`]) {
+    return [];
+  }
+  return kodiRecords[`${type}s`].map((record) => {
+    return {
+      id: 0,
+      rfidId: null,
+      playerId: record[`${type}id`],
+      image: record.thumbnail
+        ? `${process.env.NEXT_PUBLIC_KODI_HOST}/image/${encodeURI(record.thumbnail)}`
+        : "/default.jpg",
+      name: record.label,
+      artistName: type === "artist" ? record.artist : record.artist[0],
+      type,
+    } as Track;
+  });
+}
+
+export async function searchKodiLibrary(searchval: string) {
+  const songs = await searchKodiSongs(searchval);
+  const albums = await searchKodiAlbums(searchval);
+  const artists = await searchKodiArtists(searchval);
+  return [
+    ...toTracks(albums, "album"),
+    ...toTracks(songs, "song"),
+    ...toTracks(artists, "artist"),
+  ];
 }
 
 export async function kodiPlayItem(

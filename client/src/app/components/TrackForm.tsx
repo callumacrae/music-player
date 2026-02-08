@@ -32,7 +32,7 @@ export default function TrackForm({ onAdded }: { onAdded: () => void }) {
   }, [isFetching, link]);
 
   async function addToLibrary() {
-    if (!trackDetails) throw new Error('track details unexpectedly undefined');
+    if (!trackDetails) throw new Error("track details unexpectedly undefined");
 
     setIsAdding(true);
     await addTrack({

@@ -19,12 +19,14 @@
     "@grpc/proto-loader": "^0.8.0",
     "@serialport/parser-readline": "^13.0.0",
     "@trpc/server": "^11.8.1",
+    "better-sqlite3": "^12.6.2",
     "cors": "^2.8.5",
     "express": "^5.2.1",
     "json-rpc-2.0": "^1.7.1",
     "serialport": "^13.0.0"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/chai": "^5.2.3",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
