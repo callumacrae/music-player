@@ -76,4 +76,14 @@ declare const getAppRouter: (
 >;
 type AppRouter = ReturnType<typeof getAppRouter>;
 
-export type { AppRouter, RFIDTrpcMessage };
+type Track = {
+  id: number;
+  rfidId: string | null;
+  playerId: string;
+  image: string | null;
+  name: string;
+  artistName: string;
+  type?: "album" | "artist" | "song";
+};
+
+export type { AppRouter, RFIDTrpcMessage, Track };

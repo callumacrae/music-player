@@ -8,7 +8,7 @@
     "noImplicitAny": true,
     "moduleResolution": "nodenext",
     "sourceMap": true,
-    "types": ["node"],
+    "types": ["node", "mocha"],
     "resolveJsonModule": true,
     "paths": {
       ".": ["."],

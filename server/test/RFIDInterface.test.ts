@@ -5,7 +5,7 @@ describe("RFID Connection", () => {
   it("Should throw an error when no card is detected", () => {
     assert.throws(
       () => {
-        new RFIDInterface();
+        new RFIDInterface({});
       },
       Error,
       "Throws error",

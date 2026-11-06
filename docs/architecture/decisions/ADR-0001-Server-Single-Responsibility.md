@@ -37,6 +37,11 @@ Responsibilities:
 - Detecting presence and removal of tags.
 - Handling repeated scans.
 - Reporting hardware connection failures.
+- Tag replacement does not require explicit removal
+- Due to the possibility of tag clash, there should be candidate UID filtering before replacement
+- Removal and detection are separate application events
+
+An [Eccel Pepper C1](https://eccel.co.uk/product/pepper-c1-usb/) is the assumed hardware. No current plans should be made to accommodate alternative hardware at this stage
 
 ### 2. Application-level playback control
 

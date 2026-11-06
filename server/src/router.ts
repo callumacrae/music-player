@@ -18,9 +18,9 @@ let currentTag: string | null = null;
 let rfidInterface: RFIDInterface | null = null;
 
 const messageCallback = (msg: RFIDMessage) => {
-  console.log(msg);
+  // console.log(msg);
   if (msg.messageType === "read") {
-    console.log("rfid read message:", msg);
+    //console.log("rfid read message:", msg);
     currentTag = msg?.data?.uid || "";
     const tagRead: RFIDTrpcMessage = { value: currentTag };
 

@@ -31,7 +31,7 @@ export async function getKodiClient(host: string) {
         }
       })
       .catch((e) => {
-        console.error(e);
+        // console.error(e);
         return { error: e };
       });
   });

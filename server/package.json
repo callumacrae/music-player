@@ -8,6 +8,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node --env-file=.env ./dist/server.js",
+    "start:build": "npm run build && npm start",
     "build": "npx rimraf ./dist && mkdir ./dist && tsc && tsc-alias -p tsconfig.json && npm run trpc-api-export && cp ./trpc-api-export/dist/index.d.mts ../client/src/common/api-types.mts",
     "format-fix": "prettier --config .prettierrc --write --ignore-unknown -l .",
     "test": "mocha",

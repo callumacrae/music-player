@@ -151,7 +151,10 @@ class RFIDInterface {
     let tagData = "";
 
     this.portInterface.on("data", (chunk) => {
-      tagData += decoder.write(chunk);
+      const parsedChunk = decoder.write(chunk);
+      tagData += parsedChunk;
+      console.log(JSON.stringify(parsedChunk));
+      console.log("END CHUNK");
       if (tagData.includes("}")) {
         const tagMessages = tagData.split("}");
         let newTagData = "";
@@ -166,7 +169,7 @@ class RFIDInterface {
             data: tag,
           });
         } catch (e) {
-          console.error(e);
+          // console.error(e);
           this.messageCallback({ messageType: "error", error: e });
         }
         tagData = newTagData;
